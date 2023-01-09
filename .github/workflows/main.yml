@@ -3,25 +3,39 @@ on:
   push:
     branches:
       - main
+      
 jobs:
+  configs:
+    if: github.run_number == 1
+    name: Configuraçoes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copia o arquivo .env
+        run: cp .env.example .env
+      - name: Gera uma nova chave
+        run: php artisan key:generate
+      - name: Linka a pasta storage na public
+        run: php artisan storage:link
+      - name: Altera as permissões do diretorio storage e bootstrap/cache
+        run: chmod -R 777 storage bootstrap/cache
   web-deploy:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Get the latest code
+      - name: Da checkout no repositorio
         uses: actions/checkout@v2.3.2
       - uses: actions/setup-node@master
-      - name: Copy .env
+      - name: Copia o arquivo .env
         run: php -r "file_exists('.env') || copy('.env.example', '.env');"
-      - name: Install Dependencies
+      - name: Instala as dependencias
         run: composer update --ignore-platform-reqs
-      - name: Generate key
+      - name: Gera uma nova chave
         run: php artisan key:generate
-      - name: Generate storage link
+      - name: Linka a pasta storage na public
         run: php artisan storage:link
-      - name: Directory Permissions
+      - name: Altera as permissões do diretorio bootstrap/cache
         run: chmod -R 777 storage bootstrap/cache
-      - name: 📂 Sync files
+      - name: 📂 Sincroniza os arquivos
         uses: SamKirkland/FTP-Deploy-Action@4.0.0
         with:
           server: ${{ secrets.FTP_SERVER }}
